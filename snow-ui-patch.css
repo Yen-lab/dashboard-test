@@ -1,0 +1,562 @@
+/* ============================================================
+   SNOW Dashboard — UI/UX 디자인 완성도 패치 v2.0
+   Claude Code 작업용: index.html <head> 맨 아래에 추가
+   ============================================================ */
+
+/* ── 0. Google Fonts 추가 (index.html <head> 최상단에 추가) ──
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+   ----------------------------------------------------------- */
+
+/* ── 1. CSS 변수 재정의 & 공통 강화 ── */
+:root {
+  --blue-600: #007ae6;
+  --blue-700: #005fb3;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 0 1px rgba(0,0,0,0.04);
+  --shadow-card-hover: 0 8px 24px rgba(0, 122, 230, 0.12), 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-glow: 0 0 20px rgba(0, 122, 230, 0.35);
+}
+
+/* ── 2. 인트로 화면 개선 ── */
+/* 배경 파티클 오버레이 */
+#intro-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 30% 40%, rgba(0,122,230,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 75% 65%, rgba(0,95,179,0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+#intro-screen {
+  overflow: hidden;
+}
+
+/* 인트로 텍스트 애니메이션 */
+@keyframes intro-slide-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes intro-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+#intro-screen h1,
+#intro-screen .subtitle,
+#intro-screen .start-btn {
+  animation: intro-slide-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#intro-screen h1       { animation-delay: 0.15s; }
+#intro-screen .subtitle { animation-delay: 0.28s; }
+#intro-screen .start-btn { animation-delay: 0.42s; }
+
+/* 시작 버튼 강화 */
+#intro-screen .start-btn,
+.btn-start,
+button[onclick*="showDashboard"],
+button[onclick*="startDashboard"] {
+  background: linear-gradient(135deg, #007ae6 0%, #005fb3 100%) !important;
+  border: none !important;
+  padding: 14px 36px !important;
+  border-radius: 12px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  box-shadow: 0 4px 16px rgba(0, 122, 230, 0.4), 0 1px 4px rgba(0,0,0,0.15) !important;
+  transition: all var(--transition-base) !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+#intro-screen .start-btn::after,
+.btn-start::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+#intro-screen .start-btn:hover,
+.btn-start:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 28px rgba(0, 122, 230, 0.55), 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+#intro-screen .start-btn:active,
+.btn-start:active {
+  transform: translateY(0) !important;
+  transition-duration: 80ms !important;
+}
+
+/* 지구본 pulse ring */
+@keyframes globe-pulse {
+  0%   { transform: scale(1);    opacity: 0.6; }
+  50%  { transform: scale(1.04); opacity: 1;   }
+  100% { transform: scale(1);    opacity: 0.6; }
+}
+
+#intro-screen .globe-icon,
+#intro-screen svg,
+#intro-screen .globe {
+  animation: globe-pulse 3s ease-in-out infinite;
+  filter: drop-shadow(0 0 16px rgba(0,122,230,0.4));
+}
+
+/* ── 3. 사이드바 개선 ── */
+@keyframes sidebar-slide-in {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.sidebar {
+  animation: sidebar-slide-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both 0.1s;
+}
+
+/* 사이드바 nav 아이템 — 액티브 슬라이드 인디케이터 */
+.nav-item,
+.sidebar-item,
+.sidebar a,
+aside li,
+aside a {
+  position: relative;
+  transition: all var(--transition-base) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+
+.nav-item::before,
+.sidebar-item::before,
+.sidebar a::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  width: 3px;
+  height: 60%;
+  background: var(--blue-600);
+  border-radius: 0 3px 3px 0;
+  transition: transform var(--transition-base);
+}
+
+.nav-item.active::before,
+.nav-item:hover::before,
+.sidebar-item.active::before,
+.sidebar-item:hover::before,
+.sidebar a.active::before,
+.sidebar a:hover::before {
+  transform: translateY(-50%) scaleY(1);
+}
+
+.nav-item:hover,
+.sidebar-item:hover,
+.sidebar a:hover {
+  background: rgba(0, 122, 230, 0.08) !important;
+  padding-left: 6px !important;
+}
+
+.nav-item.active,
+.sidebar-item.active,
+.sidebar a.active {
+  background: #007ae6 !important;
+  color: #ffffff !important;
+}
+
+/* 섹션 구분 레이블 스타일 강화 */
+.sidebar-section-label,
+.nav-section,
+aside .section-title {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  color: #9ca3af !important;
+  padding: 16px 12px 6px !important;
+}
+
+/* ── 4. 페이지 전환 애니메이션 ── */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.page,
+.dashboard-page,
+[id$="-page"],
+.content-section {
+  animation: page-enter 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── 5. KPI 카드 — 카운트업 & hover lift ── */
+.kpi-card,
+.metric-card,
+.stat-card,
+.summary-card {
+  transition: all var(--transition-base) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-card) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before,
+.metric-card::before,
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue-600), #4dacff);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.kpi-card:hover,
+.metric-card:hover,
+.stat-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: var(--shadow-card-hover) !important;
+}
+
+.kpi-card:hover::before,
+.metric-card:hover::before,
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+
+/* 증감 배지 */
+.badge-up,
+.badge-increase,
+[class*="increase"],
+.delta-positive {
+  background: rgba(0, 184, 124, 0.1) !important;
+  color: #00B87C !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+}
+
+.badge-down,
+.badge-decrease,
+[class*="decrease"],
+.delta-negative {
+  background: rgba(255, 69, 96, 0.1) !important;
+  color: #FF4560 !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+}
+
+/* ── 6. 차트 컨테이너 스켈레톤 → 페이드인 ── */
+@keyframes chart-fade-in {
+  from { opacity: 0; transform: scaleY(0.97); transform-origin: bottom; }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+
+.chart-container,
+.chart-wrapper,
+[id*="chart"],
+[id*="Chart"] {
+  animation: chart-fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both 0.2s;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+/* ── 7. 피로도 게이지 강화 ── */
+@keyframes gauge-fill {
+  from { stroke-dashoffset: 283; }
+}
+
+.fatigue-gauge circle,
+.gauge-ring,
+[class*="gauge"] circle {
+  animation: gauge-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) both 0.4s;
+  filter: drop-shadow(0 0 6px rgba(0, 122, 230, 0.4));
+}
+
+/* 피로도 점수 숫자 */
+.fatigue-score,
+.gauge-value,
+[class*="fatigue"] .score {
+  font-family: 'DM Mono', monospace !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.04em !important;
+}
+
+/* 피로도 등급 배지 */
+.grade-a { background: rgba(0,184,124,0.12) !important; color: #00B87C !important; font-weight: 700 !important; }
+.grade-b { background: rgba(0,122,230,0.12) !important; color: #007ae6 !important; font-weight: 700 !important; }
+.grade-c { background: rgba(255,107,53,0.12) !important; color: #FF6B35 !important; font-weight: 700 !important; }
+.grade-d { background: rgba(255,69,96,0.12)  !important; color: #FF4560 !important; font-weight: 700 !important; }
+
+/* ── 8. 테이블 row hover & 정렬 ── */
+table tbody tr {
+  transition: background var(--transition-fast) !important;
+  cursor: default;
+}
+
+table tbody tr:hover {
+  background: rgba(0, 122, 230, 0.04) !important;
+}
+
+table th {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: #6b7280 !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding-bottom: 10px !important;
+  user-select: none;
+  cursor: pointer;
+}
+
+table th:hover { color: var(--blue-600) !important; }
+
+table td {
+  font-size: 13.5px !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+  vertical-align: middle !important;
+  padding: 11px 12px !important;
+}
+
+/* ── 9. 소재 카드 (룩북) hover 강화 ── */
+.material-card,
+.lookbook-card,
+.creative-card {
+  transition: all var(--transition-base) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.material-card:hover,
+.lookbook-card:hover,
+.creative-card:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  box-shadow: 0 12px 32px rgba(0, 122, 230, 0.15), 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+
+/* ── 10. 필터 탭 (전체/스플래시/SAN/팝업) ── */
+.filter-tab,
+.tab-btn,
+.segment-btn {
+  transition: all var(--transition-fast) !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  padding: 6px 14px !important;
+  border: 1.5px solid transparent !important;
+}
+
+.filter-tab.active,
+.tab-btn.active,
+.segment-btn.active {
+  background: var(--blue-600) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(0,122,230,0.3) !important;
+}
+
+.filter-tab:hover:not(.active),
+.tab-btn:hover:not(.active),
+.segment-btn:hover:not(.active) {
+  background: rgba(0,122,230,0.08) !important;
+  border-color: rgba(0,122,230,0.2) !important;
+  color: var(--blue-600) !important;
+}
+
+/* ── 11. 경고/알림 배너 애니메이션 ── */
+@keyframes alert-slide-in {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.alert-banner,
+.warning-banner,
+[class*="alert"],
+[class*="warning"] {
+  animation: alert-slide-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  border-radius: 10px !important;
+}
+
+/* 즉시교체 배지 강조 */
+.badge-urgent,
+.badge-replace,
+[class*="urgent"] {
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,69,96,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(255,69,96,0); }
+}
+
+/* ── 12. 랭킹 카드 (소재 추천 TOP) ── */
+.rank-badge,
+.rank-number {
+  font-family: 'DM Mono', monospace !important;
+  font-weight: 700 !important;
+}
+
+.rank-card-1 { border-left: 3px solid #f59e0b !important; }
+.rank-card-2 { border-left: 3px solid #94a3b8 !important; }
+.rank-card-3 { border-left: 3px solid #a78bfa !important; }
+
+/* ── 13. CSV 드롭존 ── */
+.drop-zone,
+.csv-drop,
+[class*="dropzone"],
+[class*="drop-zone"] {
+  transition: all var(--transition-base) !important;
+  border-radius: 16px !important;
+  border: 2px dashed #d1d5db !important;
+}
+
+.drop-zone:hover,
+.csv-drop:hover,
+[class*="dropzone"]:hover {
+  border-color: var(--blue-600) !important;
+  background: rgba(0,122,230,0.04) !important;
+  transform: scale(1.01) !important;
+}
+
+.drop-zone.drag-over,
+.csv-drop.drag-over {
+  border-color: var(--blue-600) !important;
+  background: rgba(0,122,230,0.08) !important;
+  box-shadow: var(--shadow-glow) !important;
+}
+
+/* ── 14. 스크롤바 커스텀 ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0,122,230,0.4); }
+
+/* ── 15. 헤더 영역 ── */
+.dashboard-header,
+.page-header,
+header.main {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  background: rgba(255,255,255,0.88) !important;
+  border-bottom: 1px solid rgba(0,0,0,0.06) !important;
+  transition: box-shadow var(--transition-base);
+}
+
+.dashboard-header.scrolled,
+.page-header.scrolled {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+/* ── 16. 데이터 없음 Empty State ── */
+.empty-state,
+[class*="empty"] {
+  text-align: center;
+  padding: 48px 24px;
+  opacity: 0.6;
+}
+
+/* ── 17. 툴팁 ── */
+[data-tooltip] {
+  position: relative;
+  cursor: help;
+}
+
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: all var(--transition-fast);
+  z-index: 1000;
+}
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── 18. 반응형 ── */
+@media (max-width: 768px) {
+  .kpi-card:hover,
+  .metric-card:hover,
+  .stat-card:hover {
+    transform: none !important;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--transition-base);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  table {
+    font-size: 12px !important;
+  }
+
+  table th,
+  table td {
+    padding: 8px !important;
+  }
+}
+
+/* ── 19. 카운트업 JS와 연동할 클래스 ── */
+.count-up { display: inline-block; }
+
+/* ── 20. 페이지 로딩 스켈레톤 ── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 37%,
+    #f0f0f0 63%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
