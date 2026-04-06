@@ -1238,10 +1238,6 @@
       transition: all 0.18s;
       white-space: nowrap;
     }
-    .plan-tag.active {
-      background: #007ae6;
-      color: #fff;
-    }
     .plan-tag:hover:not(.active) { background: #e5f3ff; }
 
     /* ── PLANNING TIMELINE ── */
@@ -1747,12 +1743,8 @@
 
     .plan-month-item:hover { background:#f0f7ff; }
 
-    .plan-month-item.active {
-      background:#007ae6;
-    }
-
-    .plan-month-item.active .plan-month-label { color:#fff; font-weight:700; }
-    .plan-month-item.active .plan-month-season { color:rgba(255,255,255,0.8); }
+    .plan-month-item.active .plan-month-label { color:#1A1A1A; font-weight:700; }
+    .plan-month-item.active .plan-month-season { color:#555; }
     .plan-month-item.active .plan-month-dot { background:#fff; box-shadow:0 0 0 3px rgba(255,255,255,0.4); }
 
     .plan-month-item.is-current .plan-month-dot {
@@ -1845,6 +1837,11 @@
   <div class="nav-section">
     <div class="nav-section-label">ARCHIVE</div>
     <div class="nav-item" data-page="archive">소재 아카이브</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-section-label">REPORTS</div>
+    <div class="nav-item" data-page="report-archive">리포트 아카이브</div>
   </div>
 </nav>
 
@@ -2867,7 +2864,11 @@
         </div>
       </div>
       <!-- 카드 그리드 -->
-      <div id="archive-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:16px;"></div>
+      <div id="archive-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px;"></div>
+    </div>
+
+    <div class="page" id="page-report-archive">
+      <div id="report-archive-wrap"></div>
     </div>
 
     <!-- ── PAGE: 재구독 & 윈백 ── -->
@@ -2921,6 +2922,21 @@
 </div><!-- /main -->
 
 <script>
+  const MONTH_THEME = [
+    { emoji: '❄️', bg: '#e8f4ff', accent: '#b8d9f8', deep: '#1a3a6b' },
+    { emoji: '💝', bg: '#fff0f5', accent: '#f8c0d8', deep: '#b5446e' },
+    { emoji: '🌸', bg: '#fff5f8', accent: '#f8c8d8', deep: '#2d7a4f' },
+    { emoji: '🌿', bg: '#f0faf0', accent: '#b8e8b8', deep: '#c2185b' },
+    { emoji: '☀️', bg: '#fffbec', accent: '#f8e0a0', deep: '#e65100' },
+    { emoji: '🌊', bg: '#ecfcf8', accent: '#a0e8d8', deep: '#00695c' },
+    { emoji: '🏖️', bg: '#e8f6ff', accent: '#a8d8f8', deep: '#1565c0' },
+    { emoji: '🍉', bg: '#fff2f2', accent: '#f8b8b8', deep: '#b71c1c' },
+    { emoji: '🍂', bg: '#fff6ec', accent: '#f8d0a0', deep: '#e64a19' },
+    { emoji: '🎃', bg: '#fff4e8', accent: '#f8c890', deep: '#bf360c' },
+    { emoji: '🍁', bg: '#faf4ec', accent: '#e8c8a0', deep: '#4e342e' },
+    { emoji: '🎄', bg: '#f0faf4', accent: '#a8e0b8', deep: '#1b5e20' },
+  ];
+
   /* ── 네비게이션 ── */
   const PAGE_TITLES = {
     home:      '대시보드 홈',
@@ -2931,6 +2947,7 @@
     planning:  '소재 플래닝',
     proposal:  '기획안 도출',
     archive:   '소재 아카이브',
+    'report-archive': '리포트 아카이브',
     retention: '재구독 & 윈백',
   };
 
@@ -2978,6 +2995,7 @@
       if (page === 'fatigue'   && !window._fatigueInited)   { window._fatigueInited   = true; initFatigueCharts(); }
       if (page === 'planning'  && !window._planningInited)  { window._planningInited  = true; initPlanningSection(); }
       if (page === 'archive'   && !window._archiveInited)   { window._archiveInited   = true; initArchive(); }
+      if (page === 'report-archive' && !window._reportArchiveInited) { window._reportArchiveInited = true; initReportArchive(); }
       if (page === 'retention' && !window._retentionInited) { window._retentionInited = true; initRetentionCharts(); }
     });
   });
@@ -3732,14 +3750,40 @@
     const m = parseInt(item.dataset.month);
     if (m < thisMonth) item.classList.add('is-past');
     else if (m === thisMonth) item.classList.add('is-current');
+    const dot = item.querySelector('.plan-month-dot');
+    if (dot) { dot.style.background = MONTH_THEME[m-1].accent; dot.style.opacity = '0.5'; }
+    const season = item.querySelector('.plan-month-season');
+    if (season) season.textContent = MONTH_THEME[m-1].emoji + ' ' + season.textContent;
   });
 
   // 월 클릭 이벤트
   document.querySelectorAll('.plan-month-item').forEach(item => {
     item.addEventListener('click', function() {
-      document.querySelectorAll('.plan-month-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.plan-month-item').forEach(i => {
+        i.classList.remove('active');
+        i.style.background = '';
+        i.style.border = '';
+        i.style.boxShadow = '';
+        const im = parseInt(i.dataset.month);
+        const d = i.querySelector('.plan-month-dot');
+        if (d) { d.style.background = MONTH_THEME[im-1].accent; d.style.opacity = '0.5'; d.style.boxShadow = 'none'; }
+        const lbl = i.querySelector('.plan-month-label');
+        if (lbl) { lbl.style.color = ''; lbl.style.fontWeight = ''; }
+        const ssn = i.querySelector('.plan-month-season');
+        if (ssn) { ssn.style.color = ''; ssn.style.opacity = ''; }
+      });
       this.classList.add('active');
       const month = parseInt(this.dataset.month);
+      const t = MONTH_THEME[month-1];
+      this.style.background = t.bg;
+      this.style.border = '2.5px solid ' + t.accent;
+      this.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)';
+      const activeDot = this.querySelector('.plan-month-dot');
+      if (activeDot) { activeDot.style.background = t.deep; activeDot.style.opacity = '1'; activeDot.style.boxShadow = '0 0 0 3px #fff, 0 0 0 5px ' + t.deep; }
+      const activeLabel = this.querySelector('.plan-month-label');
+      if (activeLabel) { activeLabel.style.color = t.deep; activeLabel.style.fontWeight = '800'; }
+      const activeSeason = this.querySelector('.plan-month-season');
+      if (activeSeason) { activeSeason.style.color = t.deep; activeSeason.style.opacity = '0.75'; }
       showPlanDetail(month);
     });
   });
@@ -3769,18 +3813,32 @@
   if (!monthData) return;
 
   // 월 배지
-  document.getElementById('plan-detail-month-badge').textContent = `2026년 ${month}월`;
+  const badge = document.getElementById('plan-detail-month-badge');
+  badge.textContent = `${MONTH_THEME[month-1].emoji} 2026년 ${month}월`;
+  badge.style.cssText = `background:${MONTH_THEME[month-1].bg};color:#1A1A1A;border:1.5px solid ${MONTH_THEME[month-1].accent};border-radius:12px;padding:6px 18px;font-size:14px;font-weight:700;white-space:nowrap`;
 
   // 소재 태그
   const tagRow = document.getElementById('plan-detail-tag-row');
   const medals = ['🥇','🥈','🥉'];
+  const themeAccent = MONTH_THEME[month-1].accent;
+  function applyTagStyles() {
+    tagRow.querySelectorAll('.plan-tag').forEach(t => {
+      if (t.classList.contains('active')) {
+        t.style.cssText = `background:${themeAccent};color:#1A1A1A;border:none;font-weight:700;border-radius:20px;padding:6px 18px;font-size:13px;cursor:pointer;white-space:nowrap;`;
+      } else {
+        t.style.cssText = `background:#ffffff;color:#888;border:1.5px solid ${themeAccent};opacity:0.8;border-radius:20px;padding:6px 18px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;`;
+      }
+    });
+  }
   tagRow.innerHTML = monthData.tags.map((tag, i) =>
     `<button class="plan-tag${i===0?' active':''}" data-plan="${tag}">${medals[i]} ${tag}</button>`
   ).join('');
+  applyTagStyles();
   tagRow.querySelectorAll('.plan-tag').forEach(btn => {
     btn.addEventListener('click', function() {
       tagRow.querySelectorAll('.plan-tag').forEach(t => t.classList.remove('active'));
       this.classList.add('active');
+      applyTagStyles();
       renderPlanDetail(this.dataset.plan, month);
     });
   });
@@ -3794,10 +3852,16 @@
   const d = monthData && monthData.materials[name];
   if (!d) return;
 
-  document.getElementById('plan-detail-card-top').style.background = d.slotColor;
+  const cardTop = document.getElementById('plan-detail-card-top');
+  cardTop.style.background = `linear-gradient(135deg, ${MONTH_THEME[month-1].accent}, ${MONTH_THEME[month-1].bg})`;
   document.getElementById('plan-detail-emoji').textContent = d.emoji;
-  document.getElementById('plan-detail-name').textContent = name;
-  document.getElementById('plan-detail-slot-badge').textContent = d.slot;
+  const nameEl = document.getElementById('plan-detail-name');
+  nameEl.textContent = name;
+  nameEl.style.color = '#1A1A1A';
+  const slotBadge = document.getElementById('plan-detail-slot-badge');
+  slotBadge.textContent = d.slot;
+  slotBadge.style.background = 'rgba(255,255,255,0.6)';
+  slotBadge.style.color = '#1A1A1A';
   document.getElementById('plan-detail-reasons').innerHTML = d.reasons.join('<br>');
 
   const pct = Math.round((d.expectedMax / 6) * 100);
@@ -5273,8 +5337,8 @@ function initArchive() {
           <div style="font-size:14px;font-weight:600;color:#1A1A1A;line-height:1.4;">${it.name}</div>
           <span class="grade-badge grade-${it.grade.toLowerCase()}" style="flex-shrink:0;margin-left:8px;">${it.grade}</span>
         </div>
-        <div style="display:flex;gap:10px;font-size:12px;color:var(--sub);margin-bottom:8px;">
-          <span>${it.slot}</span><span>·</span><span>CTR ${it.ctr.toFixed(2)}%</span><span>·</span><span>${it.weeks}주 운영</span><span>·</span><span style="color:#007ae6;font-weight:600">${it.year}년 ${it.month}월</span>
+        <div style="display:flex;gap:10px;font-size:12px;color:var(--sub);margin-bottom:8px;flex-wrap:wrap;">
+          <span style="white-space:nowrap">${it.slot}</span><span>·</span><span style="white-space:nowrap">CTR ${it.ctr.toFixed(2)}%</span><span>·</span><span style="white-space:nowrap">${it.weeks}주 운영</span><span>·</span><span style="white-space:nowrap;color:#007ae6;font-weight:600">${it.year}년 ${it.month}월</span>
         </div>
         <div style="font-size:12px;color:var(--sub);line-height:1.6;margin-bottom:10px;">${it.desc}</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;">
@@ -5314,6 +5378,190 @@ function initArchive() {
 
   render();
 }
+
+function initReportArchive() {
+  const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const wrap = document.getElementById('report-archive-wrap');
+  if (!wrap) return;
+
+  let selectedYear = new Date().getFullYear();
+
+  function getReports() {
+    try { return JSON.parse(localStorage.getItem('snow_reports') || '[]'); }
+    catch { return []; }
+  }
+
+  function getSubtitle(monthReports, year) {
+    const weeks = monthReports.map(r => r.week).filter(Boolean);
+    if (!weeks.length) return '미생성';
+    return `${year} · ${Math.max(...weeks)}주차`;
+  }
+
+  wrap.innerHTML = '<div style="display:flex;flex-direction:column;gap:16px;"><div id="arc-year-bar" style="display:flex;gap:8px;flex-wrap:wrap;padding-bottom:4px;"></div><div id="arc-cards-grid"></div></div>';
+
+  function renderYearBar() {
+    const reports = getReports();
+    const yearSet = new Set(reports.map(r => parseInt(r.date.split('.')[0])).filter(y => !isNaN(y)));
+    yearSet.add(new Date().getFullYear());
+    const years = Array.from(yearSet).sort((a, b) => b - a);
+
+    const bar = document.getElementById('arc-year-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+
+    const select = document.createElement('select');
+    select.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;color:#1A1A1A;background:#fff;cursor:pointer;outline:none;';
+
+    years.forEach(year => {
+      const opt = document.createElement('option');
+      opt.value = year;
+      opt.textContent = year + '년';
+      opt.selected = year === selectedYear;
+      select.appendChild(opt);
+    });
+
+    select.addEventListener('change', () => {
+      selectedYear = parseInt(select.value);
+      render();
+    });
+
+    bar.appendChild(select);
+  }
+
+  function render() {
+    const reports = getReports().filter(r => parseInt(r.date.split('.')[0]) === selectedYear);
+    const grid = document.getElementById('arc-cards-grid');
+    if (!grid) return;
+
+    let html = '<div class="arc-grid">';
+
+    for (let m = 1; m <= 12; m++) {
+      const monthReports = reports.filter(r => r.month === m);
+      const sub = getSubtitle(monthReports, selectedYear);
+
+      let stackHtml = '';
+      for (let w = 0; w < 4; w++) {
+        const rep = monthReports.find(r => r.week === w + 1);
+        if (rep && rep.thumb) {
+          stackHtml += `<img data-i="${w}" src="${rep.thumb}" alt="${m}월 ${w+1}주차" style="object-fit:cover;object-position:top center;width:110px;height:76px;">`;
+        } else {
+          stackHtml += `
+  <div data-i="${w}" style="
+    position:absolute;
+    bottom:0;
+    right:0;
+    width:110px;
+    height:76px;
+    border-radius:10px;
+    border: 2px dashed ${MONTH_THEME[m-1].accent};
+    background: rgba(255,255,255,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transform-origin:bottom center;
+    transition:transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+  ">
+    <div style="
+      width:20px;
+      height:20px;
+      border-radius:50%;
+      border:2px solid ${MONTH_THEME[m-1].accent};
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:${MONTH_THEME[m-1].accent};
+      font-size:16px;
+      line-height:1;
+    ">+</div>
+  </div>`;
+        }
+      }
+
+      html += `
+        <div class="arc-card" data-month="${m}" onclick="openMonthModal(${m},${selectedYear})"
+          style="background:${MONTH_THEME[m-1].bg}; border-color:${MONTH_THEME[m-1].accent};">
+          <div class="arc-card-label">REPORT</div>
+          <div class="arc-card-title">${MONTHS[m-1]}</div>
+          <div class="arc-card-sub">${sub}</div>
+          <div class="arc-img-stack">${stackHtml}</div>
+          <div style="position:absolute;bottom:12px;left:16px;font-size:52px;opacity:0.13;line-height:1;pointer-events:none;user-select:none;">${MONTH_THEME[m-1].emoji}</div>
+        </div>`;
+    }
+
+    html += '</div>';
+    grid.innerHTML = html;
+  }
+
+  window.openMonthModal = function(monthIndex, year) {
+    const reports = getReports().filter(r => parseInt(r.date.split('.')[0]) === year);
+    const monthReports = reports.filter(r => r.month === monthIndex);
+
+    let weeksHtml = '';
+    for (let w = 1; w <= 4; w++) {
+      const rep = monthReports.find(r => r.week === w);
+      weeksHtml += `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:220px;height:148px;border-radius:12px;overflow:hidden;background:#dde8f5;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            ${rep && rep.thumb
+              ? `<img src="${rep.thumb}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;">`
+              : `<div style="width:28px;height:28px;background:#bfcfe8;border-radius:6px;"></div>`
+            }
+          </div>
+          <div style="font-size:13px;font-weight:700;color:#1A1A1A;">${w}주차</div>
+          ${rep
+            ? `<button onclick="downloadReport('${rep.id}')"
+                style="background:#007ae6;color:#fff;border:none;border-radius:8px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:600;">
+                PNG 다운로드
+               </button>`
+            : `<span style="font-size:12px;color:#aaa;">미생성</span>`
+          }
+        </div>`;
+    }
+
+    document.getElementById('reportModalOverlay').innerHTML = `
+      <div style="background:#fff;border-radius:20px;padding:32px;width:600px;max-width:94vw;position:relative;">
+        <button onclick="closeMonthModal()"
+          style="position:absolute;top:20px;right:20px;background:none;border:none;font-size:20px;color:#888;cursor:pointer;line-height:1;">✕</button>
+        <div style="font-size:11px;font-weight:700;color:#007ae6;letter-spacing:1.5px;margin-bottom:6px;">REPORT</div>
+        <div style="font-size:28px;font-weight:800;color:#1A1A1A;margin-bottom:20px;">${MONTHS[monthIndex-1]} 리포트</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
+          ${weeksHtml}
+        </div>
+        <button onclick="closeMonthModal()"
+          style="width:100%;height:44px;border:1px solid #ddd;background:#fff;border-radius:10px;font-size:14px;color:#555;cursor:pointer;font-weight:500;">
+          닫기
+        </button>
+      </div>`;
+    document.getElementById('reportModalOverlay').classList.add('open');
+  };
+
+  window.closeMonthModal = function() {
+    document.getElementById('reportModalOverlay').classList.remove('open');
+  };
+
+  window.downloadReport = function(id) {
+    const reports = getReports();
+    const rep = reports.find(r => r.id === id);
+    if (!rep || !rep.dataUrl) {
+      alert('저장된 이미지가 없습니다.');
+      return;
+    }
+    const a = document.createElement('a');
+    a.download = rep.title + '.png';
+    a.href = rep.dataUrl;
+    a.click();
+  };
+
+  document.getElementById('reportModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeMonthModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeMonthModal();
+  });
+
+  renderYearBar();
+  render();
+}
 </script>
 <script>
   // 알림 드롭다운 토글
@@ -5337,73 +5585,196 @@ function initArchive() {
      ══════════════════════════════════════════ -->
 <script>
 (function() {
-  document.getElementById('weeklyReportBtn').addEventListener('click', async function() {
-    const btn = this;
-    btn.textContent = '⏳ 생성 중...';
-    btn.disabled = true;
+document.getElementById('weeklyReportBtn').addEventListener('click', async function() {
+  const btn = this;
+  btn.textContent = '⏳ 생성 중...';
+  btn.disabled = true;
 
-    // 캡처할 요소들 수집 (홈 페이지 기준)
-    const homeEl = document.getElementById('page-home');
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff;padding:40px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;box-sizing:border-box;z-index:-1;';
 
-    // 임시 리포트 컨테이너 생성
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = [
-      'position:fixed', 'left:-9999px', 'top:0',
-      'width:900px', 'background:#F0FBFF',
-      'padding:32px', 'font-family:sans-serif',
-      'box-sizing:border-box', 'z-index:-1',
-    ].join(';');
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const weekNum = Math.max(1, Math.ceil(now.getDate() / 7));
 
-    // 상단 헤더
-    const badgeEl = document.getElementById('home-date-badge');
-    const weekText = badgeEl ? badgeEl.textContent : '';
-    const header = document.createElement('div');
-    header.style.cssText = 'background:linear-gradient(135deg,#007ae6,#00294d);border-radius:16px;padding:24px 28px;margin-bottom:24px;color:#fff';
-    header.innerHTML = `
-      <div style="font-size:20px;font-weight:700;margin-bottom:6px">SNOW 프로모션 주간 리포트</div>
-      <div style="font-size:13px;opacity:0.8;margin-bottom:16px">2026년 3월 4주차 &nbsp;·&nbsp; 2026.03.23~03.29</div>
-      <div style="font-size:14px;font-weight:600;opacity:0.9">📊 이번 주 핵심 지표</div>
-    `;
-    wrapper.appendChild(header);
+  const kpiVals = document.querySelectorAll('#page-home .kpi-value');
+  const totalClicks = kpiVals[0] ? kpiVals[0].textContent : '—';
+  const avgCtr     = kpiVals[1] ? kpiVals[1].textContent : '—';
+  const fatigueCount = kpiVals[3] ? kpiVals[3].textContent : '—';
 
-    // 홈 페이지 콘텐츠 클론
-    const clone = homeEl.cloneNode(true);
-    clone.style.cssText = 'display:block;position:static;width:100%;background:transparent';
-    // home-title-row 숨기기 (중복)
-    const titleRow = clone.querySelector('.home-title-row');
-    if (titleRow) titleRow.style.display = 'none';
-    wrapper.appendChild(clone);
+  const sanCtr     = document.querySelector('#slot-panel-san .kpi-value') ? document.querySelector('#slot-panel-san .kpi-value').textContent : '—';
+  const splashCtr  = document.querySelector('#slot-panel-splash .kpi-value') ? document.querySelector('#slot-panel-splash .kpi-value').textContent : '—';
+  const popupCtr   = document.querySelector('#slot-panel-popup .kpi-value') ? document.querySelector('#slot-panel-popup .kpi-value').textContent : '—';
 
-    // 하단 푸터
-    const footer = document.createElement('div');
-    footer.style.cssText = 'margin-top:24px;padding:14px 18px;background:#fff;border-radius:12px;border-left:3px solid #b3dbff;font-size:11px;color:#888;line-height:1.8';
-    footer.innerHTML = `
-      * 본 리포트는 SNOW 대시보드에서 자동 생성되었습니다.<br>
-      * 샘플 데이터 기준 · 실데이터 교체 예정
-    `;
-    wrapper.appendChild(footer);
+  const planTags = document.querySelectorAll('#plan-detail-tag-row .plan-tag');
+  const rec1 = planTags[0] ? planTags[0].textContent.trim() : '가족AI보정';
+  const rec2 = planTags[1] ? planTags[1].textContent.trim() : '어린이날필터';
 
-    document.body.appendChild(wrapper);
+  wrapper.innerHTML = `
+    <div style="background:linear-gradient(135deg,#007ae6,#00294d);border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="color:rgba(255,255,255,0.7);font-size:11px;font-weight:600;letter-spacing:1px;margin-bottom:6px">SNOW 구독 프로모션</div>
+        <div style="color:#fff;font-size:22px;font-weight:800">주간 리포트</div>
+      </div>
+      <div style="text-align:right">
+        <div style="color:rgba(255,255,255,0.7);font-size:11px;margin-bottom:4px">${now.getFullYear()}년</div>
+        <div style="color:#fff;font-size:16px;font-weight:700">${month}월 ${weekNum}주차</div>
+      </div>
+    </div>
 
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
+      <div style="background:#f8fcff;border-radius:14px;padding:20px;border-top:3px solid #007ae6">
+        <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:600">전체 평균 CTR</div>
+        <div style="font-size:32px;font-weight:800;color:#007ae6">${avgCtr}</div>
+        <div style="font-size:12px;color:#00B87C;margin-top:4px;font-weight:600">▲ 0.3%p vs 전주</div>
+      </div>
+      <div style="background:#f8fcff;border-radius:14px;padding:20px;border-top:3px solid #00B87C">
+        <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:600">총 클릭수</div>
+        <div style="font-size:32px;font-weight:800;color:#00B87C">${totalClicks}</div>
+        <div style="font-size:12px;color:#00B87C;margin-top:4px;font-weight:600">▲ 12.4% vs 전주</div>
+      </div>
+      <div style="background:#fff8f8;border-radius:14px;padding:20px;border-top:3px solid #FF4560">
+        <div style="font-size:11px;color:#888;margin-bottom:8px;font-weight:600">피로도 경고 소재</div>
+        <div style="font-size:32px;font-weight:800;color:#FF4560">${fatigueCount}건</div>
+        <div style="font-size:12px;color:#FF4560;margin-top:4px;font-weight:600">▲ 1건 증가</div>
+      </div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #EBEBEB;border-radius:14px;padding:20px;margin-bottom:20px">
+      <div style="font-size:13px;font-weight:700;color:#1A1A1A;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f0f0f0">구좌별 성과</div>
+      <div style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #f5f5f5">
+        <div style="width:80px;font-size:12px;font-weight:700;color:#4dacff;flex-shrink:0">SAN</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:2px">벚꽃 AI 지우개</div>
+          <div style="font-size:11px;color:#888">시즌 소재 투입으로 118% 효율 반등</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:20px;font-weight:800;color:#1A1A1A">${sanCtr}</div>
+          <div style="font-size:11px;color:#00B87C;font-weight:600">▲ +1.04%p</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;padding:12px 0;border-bottom:1px solid #f5f5f5">
+        <div style="width:80px;font-size:12px;font-weight:700;color:#1a94ff;flex-shrink:0">스플래시</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:2px">벚꽃 ver.</div>
+          <div style="font-size:11px;color:#888">B612 +2.1%p 폭등, 11%대 안착</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:20px;font-weight:800;color:#1A1A1A">${splashCtr}</div>
+          <div style="font-size:11px;color:#00B87C;font-weight:600">▲ +0.23%p</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;padding:12px 0">
+        <div style="width:80px;font-size:12px;font-weight:700;color:#007ae6;flex-shrink:0">일반팝업</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:2px">AI 지우개</div>
+          <div style="font-size:11px;color:#888">전 구좌 동반 상승, 2%대 안착</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:20px;font-weight:800;color:#1A1A1A">${popupCtr}</div>
+          <div style="font-size:11px;color:#00B87C;font-weight:600">▲ +0.33%p</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#f8fcff;border-left:4px solid #007ae6;border-radius:0 12px 12px 0;padding:16px 20px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:#007ae6;margin-bottom:6px;letter-spacing:0.5px">이번 주 총평</div>
+      <div style="font-size:13px;color:#1A1A1A;line-height:1.8">SAN 구좌 CTR 118% 반등이 핵심 성과. 벚꽃 시즌 소재가 전 구좌 지표를 견인하며 시즌성 킬러 콘텐츠의 효과 입증.</div>
+    </div>
+
+    <div style="background:#fff;border:1px solid #EBEBEB;border-radius:14px;padding:20px">
+      <div style="font-size:13px;font-weight:700;color:#1A1A1A;margin-bottom:14px">다음 주 추천 소재</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div style="background:#f8fcff;border-radius:10px;padding:14px;border-top:2px solid #007ae6">
+          <div style="font-size:10px;color:#007ae6;font-weight:700;margin-bottom:4px">스플래시 · 1순위</div>
+          <div style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:4px">${rec1}</div>
+          <div style="font-size:11px;color:#888">어린이날 D-12 · 예상 CTR 4.8%</div>
+        </div>
+        <div style="background:#f8fcff;border-radius:10px;padding:14px;border-top:2px solid #4dacff">
+          <div style="font-size:10px;color:#4dacff;font-weight:700;margin-bottom:4px">SAN · 2순위</div>
+          <div style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:4px">${rec2}</div>
+          <div style="font-size:11px;color:#888">5/5 시즌 매칭 · 예상 CTR 4.2%</div>
+        </div>
+        <div style="background:#fff8f8;border-radius:10px;padding:14px;border-top:2px solid #FF4560">
+          <div style="font-size:10px;color:#FF4560;font-weight:700;margin-bottom:4px">⚡ 교체 필요</div>
+          <div style="font-size:13px;font-weight:600;color:#1A1A1A;margin-bottom:4px">XS Pro</div>
+          <div style="font-size:11px;color:#888">6주 운영 · CTR -23% 하락</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px;text-align:center;font-size:10px;color:#ccc">
+      SNOW 구독 프로모션 대시보드 자동 생성 · ${now.getFullYear()}.${String(month).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}
+    </div>
+  `;
+
+  document.body.appendChild(wrapper);
+
+  try {
+    const canvas = await html2canvas(wrapper, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+    });
+    const link = document.createElement('a');
+    link.download = `SNOW_주간리포트_${now.getFullYear()}_${month}월${weekNum}주차.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    // localStorage에 리포트 저장
     try {
-      const canvas = await html2canvas(wrapper, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#F0FBFF',
-        logging: false,
-      });
-      const link = document.createElement('a');
-      link.download = 'SNOW_주간리포트_2026_3월4주차.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
+      const now2 = new Date();
+      const m2 = now2.getMonth() + 1;
+      const w2 = Math.max(1, Math.ceil(now2.getDate() / 7));
+      const reportId = `report_${now2.getFullYear()}_${m2}_${w2}`;
+      const reportTitle = `SNOW_주간리포트_${now2.getFullYear()}_${m2}월${w2}주차`;
+      const reportDate = `${now2.getFullYear()}.${String(m2).padStart(2,'0')}.${String(now2.getDate()).padStart(2,'0')}`;
+
+      // 썸네일용 작은 이미지 생성
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 320;
+      thumbCanvas.height = 200;
+      const thumbCtx = thumbCanvas.getContext('2d');
+      thumbCtx.drawImage(canvas, 0, 0, 320, 200);
+      const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.7);
+
+      const reports = JSON.parse(localStorage.getItem('snow_reports') || '[]');
+      const existingIdx = reports.findIndex(r => r.id === reportId);
+      const newReport = {
+        id: reportId,
+        title: reportTitle,
+        date: reportDate,
+        month: m2,
+        week: w2,
+        thumb: thumbDataUrl,
+        dataUrl: canvas.toDataURL('image/png'),
+      };
+
+      if (existingIdx >= 0) {
+        reports[existingIdx] = newReport;
+      } else {
+        reports.push(newReport);
+      }
+
+      // 최대 48개 보관 (12개월 × 4주)
+      if (reports.length > 48) reports.shift();
+      localStorage.setItem('snow_reports', JSON.stringify(reports));
+
+      // 아카이브 이미 열려있으면 갱신
+      window._reportArchiveInited = false;
+      if (currentPage === 'report-archive') { window._reportArchiveInited = true; initReportArchive(); }
     } catch(e) {
-      alert('리포트 생성 중 오류가 발생했습니다.');
-    } finally {
-      document.body.removeChild(wrapper);
-      btn.textContent = '📋 주간 리포트';
-      btn.disabled = false;
+      console.warn('리포트 저장 실패:', e);
     }
-  });
+  } catch(e) {
+    alert('리포트 생성 중 오류가 발생했습니다.');
+  } finally {
+    document.body.removeChild(wrapper);
+    btn.textContent = '📋 주간 리포트';
+    btn.disabled = false;
+  }
+});
 })();
 </script>
 
@@ -5629,6 +6000,148 @@ function initArchive() {
     transition: background 0.15s;
   }
   #aiChatSendBtn:hover { background: #005fc2; }
+
+/* ── 리포트 아카이브 ── */
+#report-archive-wrap {
+  padding: 8px 4px 24px;
+}
+.arc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 20px;
+}
+.arc-card {
+  position: relative;
+  height: 260px;
+  border-radius: 20px;
+  background: #ffffff;
+  border: 0.5px solid rgba(0,122,230,0.15);
+  padding: 22px 20px 0;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.28s ease;
+}
+.arc-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 48px rgba(0,41,77,0.13);
+}
+.arc-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #007ae6;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.arc-card-title {
+  font-size: 30px;
+  font-weight: 800;
+  color: #1A1A1A;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.arc-card-sub {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+.arc-img-stack {
+  position: absolute;
+  bottom: -10px;
+  right: 10px;
+  width: 100%;
+  height: 160px;
+}
+.arc-img-stack img {
+  position: absolute;
+  bottom: 0;
+  right: 16px;
+  width: 110px;
+  height: 76px;
+  border-radius: 10px;
+  border: 3px solid #fff;
+  object-fit: cover;
+  object-position: top center;
+  transform-origin: bottom center;
+  transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+.arc-img-stack [data-i="0"] { transform: rotate(-8deg) translateX(-16px); z-index: 1; }
+.arc-img-stack [data-i="1"] { transform: rotate(-3deg) translateX(-6px);  z-index: 2; }
+.arc-img-stack [data-i="2"] { transform: rotate(2deg)  translateX(2px);   z-index: 3; }
+.arc-img-stack [data-i="3"] { transform: rotate(7deg)  translateX(10px);  z-index: 4; }
+.arc-card:hover .arc-img-stack [data-i="0"] { transform: rotate(-20deg) translateX(-28px) translateY(-24px); }
+.arc-card:hover .arc-img-stack [data-i="1"] { transform: rotate(-7deg)  translateX(-10px) translateY(-32px); }
+.arc-card:hover .arc-img-stack [data-i="2"] { transform: rotate(7deg)   translateX(8px)  translateY(-32px); }
+.arc-card:hover .arc-img-stack [data-i="3"] { transform: rotate(20deg)  translateX(22px) translateY(-24px); }
+
+/* 모달 */
+.report-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+.report-modal-overlay.open { display: flex; }
+.report-modal-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 860px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+.report-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.report-modal-img {
+  width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+.report-modal-meta {
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.report-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.report-modal-date {
+  font-size: 12px;
+  color: #888;
+}
+.report-modal-download {
+  background: #007ae6;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.report-modal-download:hover { background: #005fb3; }
 </style>
 
 <!-- 플로팅 버튼 -->
@@ -6586,5 +7099,7 @@ SAN XS Pro 즉시 교체 1순위
   }
 })();
 </script>
+
+<div class="report-modal-overlay" id="reportModalOverlay"></div>
 </body>
 </html>
